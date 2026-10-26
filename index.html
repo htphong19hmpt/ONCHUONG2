@@ -1,0 +1,1426 @@
+# Đọc lại toàn bộ nội dung HTML ban đầu từ tệp Onchuong2.html đã cung cấp trong context
+# Chúng ta sẽ chỉnh sửa chính xác các yêu cầu:
+# 1. Giữ nguyên toàn bộ định dạng, phong cách giao diện và 120 câu hỏi.
+# 2. Bỏ hoàn toàn thời gian áp dụng cho mỗi câu (bỏ timer, bỏ đếm ngược, bỏ handleTimeOut).
+# 3. Bỏ chức năng đảo câu hỏi (không xáo trộn mảng câu hỏi originalQuestions).
+# 4. Bỏ đảo các phương án trả lời (giữ nguyên thứ tự A, B, C, D).
+# 5. Xuất ra file .html có thể tải về trực tiếp.
+
+html_content = '''<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HÓA HỌC 12 - ÔN TẬP CHƯƠNG 2: BÀI 4 ĐẾN BÀI 7 (120 CÂU)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 min-h-screen text-white flex flex-col items-center justify-between p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl text-center my-4">
+        <div class="inline-block bg-blue-600 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-2 shadow-lg">
+            Trò Chơi Học Tập - Hóa học 12
+        </div>
+        <h1 class="text-xl md:text-3xl font-extrabold bg-gradient-to-r from-teal-200 via-blue-200 to-purple-200 bg-clip-text text-transparent">
+            ÔN TẬP CHƯƠNG 2: CARBOHYDRATE (BÀI 4, 5, 6, 7 - TỔNG 120 CÂU)
+        </h1>
+        <p class="text-slate-300 text-sm md:text-base mt-1">Sách Kết nối tri thức với cuộc sống</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 md:p-8 my-auto relative overflow-hidden">
+
+        <!-- SETUP SCREEN -->
+        <div id="setup-screen" class="space-y-6">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-teal-400 mb-2">Chọn Chế Độ Chơi</h2>
+                <p class="text-slate-300 text-sm">Bộ đề 120 câu chuẩn ma trận định dạng mới: Không giới hạn thời gian - Có âm thanh phản hồi!</p>
+            </div>
+
+            <!-- Mode Selector Buttons -->
+            <div class="flex justify-center space-x-4">
+                <button id="btn-mode-group" onclick="setGameMode('group')" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-users"></i> <span>Đấu Đội / Nhiều Người</span>
+                </button>
+                <button id="btn-mode-single" onclick="setGameMode('single')" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-slate-700 text-slate-300 shadow-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-user-graduate"></i> <span>Kiểm Tra Cá Nhân (Đấu đơn)</span>
+                </button>
+            </div>
+
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700 space-y-4 max-w-md mx-auto">
+                <h3 id="setup-subtitle" class="text-center font-semibold text-teal-300 text-sm">Thiết lập thông tin các đội chơi</h3>
+                <div id="participant-inputs" class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">1</span>
+                        <input type="text" value="Đội 1" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold text-sm" placeholder="Nhập tên...">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">2</span>
+                        <input type="text" value="Đội 2" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 font-semibold text-sm" placeholder="Nhập tên...">
+                    </div>
+                </div>
+
+                <div id="add-team-box" class="flex justify-center pt-2">
+                    <button onclick="addParticipantInput()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-semibold text-xs transition flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i> <span id="add-btn-text">Thêm đội</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center pt-2">
+                <button onclick="startGame()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-lg px-8 py-3 rounded-xl shadow-lg transform transition hover:scale-105">
+                    Bắt Đầu Ngay (120 Câu)!
+                </button>
+            </div>
+        </div>
+
+        <!-- GAMEPLAY SCREEN -->
+        <div id="game-screen" class="hidden space-y-6">
+            <div class="flex flex-wrap justify-between items-center bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <span id="turn-label" class="text-xs uppercase tracking-wider text-slate-400">Thí sinh:</span>
+                    <span id="current-participant-badge" class="bg-blue-600 text-white font-bold px-3 py-1 rounded-full text-sm shadow">Bạn</span>
+                </div>
+                <div class="text-sm font-semibold text-teal-300">
+                    Câu hỏi <span id="current-q-num">1</span> / <span id="total-q-num">120</span>
+                </div>
+                <div class="flex items-center space-x-2 text-emerald-400 font-semibold text-sm bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-infinity"></i>
+                    <span>Tự do làm bài</span>
+                </div>
+            </div>
+
+            <div id="scoreboard-mini" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center"></div>
+
+            <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-700 shadow-inner">
+                <div id="question-badge" class="inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-teal-800 text-teal-200 mb-2"></div>
+                <h3 id="question-text" class="text-lg md:text-xl font-bold text-white leading-relaxed"></h3>
+            </div>
+
+            <div id="options-container" class="space-y-4"></div>
+        </div>
+
+        <!-- FEEDBACK SCREEN -->
+        <div id="feedback-screen" class="hidden space-y-6 text-center py-4">
+            <div id="feedback-icon" class="text-6xl mb-2"></div>
+            <h3 id="feedback-title" class="text-2xl font-bold"></h3>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-left max-w-2xl mx-auto">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-1">Hướng dẫn giải thích đáp án:</p>
+                <p id="feedback-rationale" class="text-slate-200 text-sm md:text-base"></p>
+            </div>
+            <div>
+                <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition transform hover:scale-105">
+                    Tiếp Tục <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- END GAME SCREEN -->
+        <div id="end-screen" class="hidden space-y-6 text-center py-6">
+            <div class="text-6xl text-yellow-400 mb-2">
+                <i class="fa-solid fa-trophy animate-bounce"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">
+                KẾT QUẢ BÀI THI TỔNG HỢP
+            </h2>
+            <p id="end-subtitle" class="text-slate-300">Đã hoàn thành toàn bộ 120 câu hỏi!</p>
+
+            <div id="final-scoreboard" class="max-w-md mx-auto space-y-3"></div>
+
+            <div class="pt-4">
+                <button onclick="restartGame()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition transform hover:scale-105">
+                    Làm Lại Từ Đầu
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-4xl text-center text-xs text-slate-400 my-2">
+        Trò chơi học tập Hóa học 12 - Chương 2: Carbohydrate (Sách Kết nối tri thức)
+    </footer>
+
+    <script>
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playCorrectSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99]; // Nốt vang C5 - E5 - G5
+                notes.forEach((freq, index) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.1);
+                    gain.gain.setValueAtTime(0.18, now + index * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.1 + 0.28);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + index * 0.1);
+                    osc.stop(now + index * 0.1 + 0.28);
+                });
+            } catch (e) {
+                console.log("Audio error", e);
+            }
+        }
+
+        function playIncorrectSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const freqs = [174.61, 138.59]; // F3 -> C#3
+                freqs.forEach((freq, index) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.15);
+                    gain.gain.setValueAtTime(0.2, now + index * 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.15 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + index * 0.15);
+                    osc.stop(now + index * 0.15 + 0.25);
+                });
+            } catch (e) {
+                console.log("Audio error", e);
+            }
+        }
+
+        const originalQuestions = [
+            // =========================================================================
+            // BÀI 4: GIỚI THIỆU VỀ CARBOHYDRATE - GLUCOSE VÀ FRUCTOSE (30 CÂU)
+            // =========================================================================
+            // 20 CÂU TRẮC NGHIỆM (8 NB, 6 TH, 4 VD, 2 VDC)
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 1 [Bài 4 - NB]. Carbohydrate là loại hợp chất hữu cơ có đặc điểm cấu tạo nào?",
+              options: [
+                  { text: "A. Hợp chất hữu cơ tạp chức, thường có công thức chung là C_n(H₂O)_m", isCorrect: true },
+                  { text: "B. Hợp chất đơn chức chứa nhóm aldehyde", isCorrect: false },
+                  { text: "C. Hợp chất đa chức chỉ chứa các nhóm alcohol", isCorrect: false },
+                  { text: "D. Hợp chất cao phân tử chứa nitrogen", isCorrect: false }
+              ],
+              rationale: "Carbohydrate là hợp chất hữu cơ tạp chức, thường có công thức chung là C_n(H₂O)_m." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 2 [Bài 4 - NB]. Carbohydrate nào sau đây thuộc loại monosaccharide?",
+              options: [
+                  { text: "A. Glucose", isCorrect: true },
+                  { text: "B. Saccharose", isCorrect: false },
+                  { text: "C. Tinh bột", isCorrect: false },
+                  { text: "D. Cellulose", isCorrect: false }
+              ],
+              rationale: "Glucose và fructose là các monosaccharide không bị thủy phân." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 3 [Bài 4 - NB]. Công thức phân tử của glucose và fructose là gì?",
+              options: [
+                  { text: "A. C₆H₁₂O₆", isCorrect: true },
+                  { text: "B. C₁₂H₂₂O₁₁", isCorrect: false },
+                  { text: "C. (C₆H₁₀O₅)_n", isCorrect: false },
+                  { text: "D. C₆H₁₀O₅", isCorrect: false }
+              ],
+              rationale: "Glucose và fructose là đồng phân cấu tạo của nhau, có cùng công thức phân tử C₆H₁₂O₆." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 4 [Bài 4 - NB]. Ở dạng mạch hở, phân tử glucose chứa những nhóm chức nào?",
+              options: [
+                  { text: "A. 5 nhóm hydroxy (-OH) và 1 nhóm aldehyde (-CH=O)", isCorrect: true },
+                  { text: "B. 5 nhóm hydroxy (-OH) và 1 nhóm ketone (>C=O)", isCorrect: false },
+                  { text: "C. 6 nhóm hydroxy (-OH)", isCorrect: false },
+                  { text: "D. 4 nhóm hydroxy (-OH) và 1 nhóm carboxyl (-COOH)", isCorrect: false }
+              ],
+              rationale: "Glucose mạch hở có công thức CH₂OH[CHOH]₄CH=O gồm 5 nhóm -OH kề nhau và 1 nhóm -CH=O." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 5 [Bài 4 - NB]. Ở dạng mạch hở, phân tử fructose chứa nhóm chức đặc trưng nào ngoài các nhóm -OH?",
+              options: [
+                  { text: "A. 1 nhóm ketone (>C=O ở vị trí C2)", isCorrect: true },
+                  { text: "B. 1 nhóm aldehyde (-CH=O ở vị trí C1)", isCorrect: false },
+                  { text: "C. 1 nhóm carboxyl (-COOH)", isCorrect: false },
+                  { text: "D. 1 nhóm amino (-NH₂)", isCorrect: false }
+              ],
+              rationale: "Fructose dạng mạch hở chứa 5 nhóm hydroxy và 1 nhóm ketone ở C số 2." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 6 [Bài 4 - NB]. Trong mật ong chứa nhiều loại đường nào nhất làm cho mật ong có vị ngọt sắc?",
+              options: [
+                  { text: "A. Fructose (khoảng 40%)", isCorrect: true },
+                  { text: "B. Glucose (khoảng 30%)", isCorrect: false },
+                  { text: "C. Saccharose", isCorrect: false },
+                  { text: "D. Maltose", isCorrect: false }
+              ],
+              rationale: "Fructose chiếm khoảng 40% trong mật ong, ngọt gấp 1,5 lần đường mía." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 7 [Bài 4 - NB]. Nồng độ glucose trong máu người trưởng thành khỏe mạnh lúc đói duy trì ổn định trong khoảng nào?",
+              options: [
+                  { text: "A. 4,4 - 7,2 mmol/L (khoảng 80 - 130 mg/dL)", isCorrect: true },
+                  { text: "B. 1,0 - 2,5 mmol/L", isCorrect: false },
+                  { text: "C. 10,0 - 15,0 mmol/L", isCorrect: false },
+                  { text: "D. 0,1 - 0,5 mmol/L", isCorrect: false }
+              ],
+              rationale: "Theo chuẩn y tế, nồng độ glucose trong máu người lúc đói là 4,4 - 7,2 mmol/L." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 8 [Bài 4 - NB]. Ở nhiệt độ thường, dung dịch glucose hòa tan Cu(OH)₂ tạo dung dịch có màu gì?",
+              options: [
+                  { text: "A. Màu xanh lam", isCorrect: true },
+                  { text: "B. Màu đỏ gạch", isCorrect: false },
+                  { text: "C. Màu tím biuret", isCorrect: false },
+                  { text: "D. Màu vàng tươi", isCorrect: false }
+              ],
+              rationale: "Do chứa nhiều nhóm -OH liền kề, glucose hòa tan Cu(OH)₂ ở nhiệt độ thường tạo phức màu xanh lam." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 9 [Bài 4 - TH]. Trong môi trường kiềm, glucose và fructose có mối quan hệ biến đổi nào sau đây?",
+              options: [
+                  { text: "A. Chuyển hóa thuận nghịch qua lại lẫn nhau", isCorrect: true },
+                  { text: "B. Tác dụng với nhau tạo thành saccharose", isCorrect: false },
+                  { text: "C. Bị phân hủy hoàn toàn thành CO₂ và H₂O", isCorrect: false },
+                  { text: "D. Fructose bị khử hoàn toàn thành sorbitol", isCorrect: false }
+              ],
+              rationale: "Trong môi trường kiềm, glucose ⇌ fructose thông qua dạng trung gian enediol." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 10 [Bài 4 - TH]. Thuốc thử nào sau đây dùng để phân biệt dung dịch glucose và dung dịch fructose?",
+              options: [
+                  { text: "A. Nước bromine (dung dịch Br₂/H₂O)", isCorrect: true },
+                  { text: "B. Thuốc thử Tollens ([Ag(NH₃)₂]OH)", isCorrect: false },
+                  { text: "C. Cu(OH)₂ trong NaOH đun nóng", isCorrect: false },
+                  { text: "D. Quỳ tím", isCorrect: false }
+              ],
+              rationale: "Glucose làm mất màu nước bromine, còn fructose trong môi trường acid không có nhóm -CH=O nên không làm mất màu nước bromine." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 11 [Bài 4 - TH]. Khi đun nóng dung dịch glucose với dung dịch Cu(OH)₂ trong NaOH dư, hiện tượng quan sát được là gì?",
+              options: [
+                  { text: "A. Xuất hiện kết tủa màu đỏ gạch (Cu₂O)", isCorrect: true },
+                  { text: "B. Xuất hiện kết tủa trắng bạc", isCorrect: false },
+                  { text: "C. Dung dịch mất màu và sủi bọt khí N₂", isCorrect: false },
+                  { text: "D. Xuất hiện kết tủa màu đen", isCorrect: false }
+              ],
+              rationale: "Nhóm -CH=O của glucose bị Cu(OH)₂ oxi hóa trong môi trường kiềm nóng tạo kết tủa đỏ gạch Cu₂O." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 12 [Bài 4 - TH]. Phản ứng tráng bạc của glucose với thuốc thử Tollens sinh ra kim loại nào bám trên thành ống nghiệm?",
+              options: [
+                  { text: "A. Kim loại bạc (Ag)", isCorrect: true },
+                  { text: "B. Kim loại đồng (Cu)", isCorrect: false },
+                  { text: "C. Kim loại sắt (Fe)", isCorrect: false },
+                  { text: "D. Kim loại nhôm (Al)", isCorrect: false }
+              ],
+              rationale: "Glucose khử phức [Ag(NH₃)₂]OH tạo lớp bạc sáng bóng (phản ứng tráng bạc)." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 13 [Bài 4 - TH]. Nhóm -OH hemiacetal của glucose ở dạng mạch vòng có phản ứng đặc trưng nào sau đây?",
+              options: [
+                  { text: "A. Tác dụng với CH₃OH khi có xúc tác khí HCl khan tạo methyl glucoside", isCorrect: true },
+                  { text: "B. Phản ứng với Cu(OH)₂ tạo kết tủa đỏ gạch", isCorrect: false },
+                  { text: "C. Làm mất màu nước bromine", isCorrect: false },
+                  { text: "D. Phản ứng thủy phân trong môi trường acid", isCorrect: false }
+              ],
+              rationale: "Nhóm -OH hemiacetal phản ứng với CH₃OH (HCl khan) tạo liên kết glycoside (methyl glucoside)." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 14 [Bài 4 - TH]. Dưới tác dụng của men vi sinh vật thích hợp, glucose lên men tạo thành sản phẩm chính nào dùng sản xuất đồ uống có cồn?",
+              options: [
+                  { text: "A. Ethanol (C₂H₅OH) và khí CO₂", isCorrect: true },
+                  { text: "B. Acetic acid và H₂O", isCorrect: false },
+                  { text: "C. Methanol và CO", isCorrect: false },
+                  { text: "D. Glycerol và dầu ăn", isCorrect: false }
+              ],
+              rationale: "C₆H₁₂O₆ (men rượu) → 2C₂H₅OH + 2CO₂↑." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 15 [Bài 4 - VD]. Cho 18 gam glucose phản ứng hoàn toàn với lượng dư thuốc thử Tollens. Khối lượng bạc kim loại thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 21,6 gam", isCorrect: true },
+                  { text: "B. 10,8 gam", isCorrect: false },
+                  { text: "C. 43,2 gam", isCorrect: false },
+                  { text: "D. 32,4 gam", isCorrect: false }
+              ],
+              rationale: "n(Glu) = 18/180 = 0,1 mol → n(Ag) = 2 × n(Glu) = 0,2 mol → m(Ag) = 0,2 × 108 = 21,6 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 16 [Bài 4 - VD]. Lên men 360 gam glucose thành ethanol với hiệu suất 80%. Khối lượng ethanol thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 147,2 gam", isCorrect: true },
+                  { text: "B. 184,0 gam", isCorrect: false },
+                  { text: "C. 92,0 gam", isCorrect: false },
+                  { text: "D. 115,2 gam", isCorrect: false }
+              ],
+              rationale: "n(Glu) = 360/180 = 2 mol → n(EtOH lí thuyết) = 4 mol → m = 4 × 46 × 80% = 147,2 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 17 [Bài 4 - VD]. Thể tích dung dịch nước bromine 0,1M tối đa bị mất màu hoàn toàn bởi 0,02 mol glucose là bao nhiêu?",
+              options: [
+                  { text: "A. 200 mL", isCorrect: true },
+                  { text: "B. 100 mL", isCorrect: false },
+                  { text: "C. 400 mL", isCorrect: false },
+                  { text: "D. 50 mL", isCorrect: false }
+              ],
+              rationale: "n(Br₂) = n(Glu) = 0,02 mol → V = 0,02 / 0,1 = 0,2 lít = 200 mL." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 18 [Bài 4 - VD]. Ứng dụng làm dịch truyền tĩnh mạch cung cấp năng lượng nhanh cho bệnh nhân suy nhược sử dụng dung dịch glucose có nồng độ bao nhiêu?",
+              options: [
+                  { text: "A. Dung dịch glucose 5%", isCorrect: true },
+                  { text: "B. Dung dịch glucose 20%", isCorrect: false },
+                  { text: "C. Dung dịch glucose 50%", isCorrect: false },
+                  { text: "D. Dung dịch glucose 0,9%", isCorrect: false }
+              ],
+              rationale: "Dung dịch truyền tĩnh mạch thông dụng là dung dịch glucose đẳng trương 5%." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 19 [Bài 4 - VDC]. Đun nóng m gam hỗn hợp gồm glucose và fructose với lượng dư thuốc thử Tollens thu được 43,2 gam Ag. Mặt khác m gam hỗn hợp này làm mất màu vừa đủ 100 mL dung dịch Br₂ 1M. Khối lượng fructose trong m gam hỗn hợp là bao nhiêu?",
+              options: [
+                  { text: "A. 18 gam", isCorrect: true },
+                  { text: "B. 36 gam", isCorrect: false },
+                  { text: "C. 9 gam", isCorrect: false },
+                  { text: "D. 27 gam", isCorrect: false }
+              ],
+              rationale: "Chỉ glucose phản ứng với Br₂: n(Glu) = n(Br₂) = 0,1 mol. Cả hai tráng bạc: n(Ag) = 0,4 mol = 2(n_Glu + n_Fru) → n_Fru = 0,1 mol → m(Fru) = 0,1 × 180 = 18 gam." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 20 [Bài 4 - VDC]. Lên men m gam glucose thành ethanol, toàn bộ khí CO₂ sinh ra hấp thụ hết vào dung dịch Ca(OH)₂ dư thu được 50 gam kết tủa. Biết hiệu suất lên men đạt 75%, giá trị của m là bao nhiêu?",
+              options: [
+                  { text: "A. 60 gam", isCorrect: true },
+                  { text: "B. 45 gam", isCorrect: false },
+                  { text: "C. 33,75 gam", isCorrect: false },
+                  { text: "D. 90 gam", isCorrect: false }
+              ],
+              rationale: "n(CaCO₃) = n(CO₂) = 0,5 mol → n(Glu phản ứng) = 0,25 mol → m = (0,25 × 180) / 75% = 60 gam." },
+
+            // 5 CÂU ĐÚNG / SAI BÀI 4 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'tf', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 21 [Bài 4 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Glucose và fructose là đồng phân cấu tạo của nhau và đều thuộc loại monosaccharide.'?",
+              correctBool: true,
+              rationale: "Đúng. Cả hai đều có CTPT C₆H₁₂O₆ và không bị thủy phân." },
+            { type: 'tf', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 22 [Bài 4 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Ở điều kiện thường, cả glucose và fructose đều là những chất rắn kết tinh, dễ tan trong nước và có vị ngọt.'?",
+              correctBool: true,
+              rationale: "Đúng. Đây là đặc tính vật lí chung của các monosaccharide." },
+            { type: 'tf', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 23 [Bài 4 - TH - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Fructose phản ứng được với thuốc thử Tollens là do trong môi trường kiềm, fructose đã chuyển hóa thuận nghịch thành glucose.'?",
+              correctBool: true,
+              rationale: "Đúng. Môi trường kiềm NH₃ trong thuốc thử Tollens làm fructose chuyển hóa thành glucose có nhóm -CH=O." },
+            { type: 'tf', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 24 [Bài 4 - VD - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Có thể dùng dung dịch nước bromine để phân biệt hai dung dịch mất nhãn gồm glucose và fructose.'?",
+              correctBool: true,
+              rationale: "Đúng. Glucose làm mất màu dung dịch Br₂ (môi trường acid), còn fructose thì không." },
+            { type: 'tf', level: 'VDC', lesson: 'Bài 4: VDC - Đúng/Sai',
+              question: "Câu 25 [Bài 4 - VDC - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Một phân tử glucose mạch hở khi tác dụng với lượng dư acetic anhydride (xúc tác base) tạo ester chứa tối đa 6 nhóm acetate.'?",
+              correctBool: false,
+              rationale: "Sai. Glucose chỉ có 5 nhóm hydroxy (-OH) nên chỉ tạo pentaacetate (chứa 5 nhóm acetate)." },
+
+            // 5 CÂU TRẢ LỜI NGẮN BÀI 4 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'sa', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 26 [Bài 4 - NB - Trả lời ngắn]. Số nguyên tử carbon có trong một phân tử glucose là bao nhiêu?",
+              correctAnswer: "6",
+              rationale: "C₆H₁₂O₆ có 6 nguyên tử carbon." },
+            { type: 'sa', level: 'NB', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 27 [Bài 4 - NB - Trả lời ngắn]. Số nhóm hydroxy (-OH) trong một phân tử glucose ở dạng mạch hở là bao nhiêu?",
+              correctAnswer: "5",
+              rationale: "Công thức CH₂OH[CHOH]₄CH=O có đúng 5 nhóm -OH." },
+            { type: 'sa', level: 'TH', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 28 [Bài 4 - TH - Trả lời ngắn]. Một phân tử glucose khi tham gia phản ứng tráng bạc hoàn toàn tạo ra tối đa bao nhiêu nguyên tử Ag?",
+              correctAnswer: "2",
+              rationale: "1 nhóm -CH=O tạo 2 nguyên tử Ag." },
+            { type: 'sa', level: 'VD', lesson: 'Bài 4: Glucose & Fructose',
+              question: "Câu 29 [Bài 4 - VD - Trả lời ngắn]. Cho 9 gam glucose phản ứng hoàn toàn với thuốc thử Tollens dư. Số mol Ag tạo thành là bao nhiêu mol? (Nhập số thập phân)",
+              correctAnswer: "0,1",
+              rationale: "n(Glu) = 9/180 = 0,05 mol → n(Ag) = 0,05 × 2 = 0,1 mol." },
+            { type: 'sa', level: 'VDC', lesson: 'Bài 4: VDC - Trả lời ngắn',
+              question: "Câu 30 [Bài 4 - VDC - Trả lời ngắn]. Lên men 1 mol glucose thành ethanol với hiệu suất 90%. Thể tích khí CO₂ (đkc) thu được là bao nhiêu lít? (Nhập số thập phân dùng dấu phẩy)",
+              correctAnswer: "44,622",
+              rationale: "n(CO₂) = 1 × 2 × 90% = 1,8 mol → V = 1,8 × 24,79 = 44,622 lít." },
+
+            // =========================================================================
+            // BÀI 5: SACCHAROSE VÀ MALTOSE (30 CÂU)
+            // =========================================================================
+            // 20 CÂU TRẮC NGHIỆM (8 NB, 6 TH, 4 VD, 2 VDC)
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 31 [Bài 5 - NB]. Saccharose và maltose thuộc nhóm carbohydrate nào sau đây?",
+              options: [
+                  { text: "A. Disaccharide", isCorrect: true },
+                  { text: "B. Monosaccharide", isCorrect: false },
+                  { text: "C. Polysaccharide", isCorrect: false },
+                  { text: "D. Polyalcohol đơn giản", isCorrect: false }
+              ],
+              rationale: "Saccharose và maltose khi thủy phân hoàn toàn tạo 2 phân tử monosaccharide nên là disaccharide." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 32 [Bài 5 - NB]. Công thức phân tử của saccharose và maltose là gì?",
+              options: [
+                  { text: "A. C₁₂H₂₂O₁₁", isCorrect: true },
+                  { text: "B. C₆H₁₂O₆", isCorrect: false },
+                  { text: "C. (C₆H₁₀O₅)_n", isCorrect: false },
+                  { text: "D. C₁₂H₂₄O₁₂", isCorrect: false }
+              ],
+              rationale: "Cả saccharose và maltose đều có công thức phân tử là C₁₂H₂₂O₁₁." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 33 [Bài 5 - NB]. Phân tử saccharose được cấu tạo từ các gốc monosaccharide nào qua liên kết glycoside?",
+              options: [
+                  { text: "A. Một đơn vị α-glucose và một đơn vị β-fructose qua liên kết α-1,2-glycoside", isCorrect: true },
+                  { text: "B. Hai đơn vị α-glucose qua liên kết α-1,4-glycoside", isCorrect: false },
+                  { text: "C. Hai đơn vị β-fructose", isCorrect: false },
+                  { text: "D. Một đơn vị glucose và một đơn vị galactose", isCorrect: false }
+              ],
+              rationale: "Saccharose liên kết giữa C1 của α-glucose và C2 của β-fructose qua cầu oxy α-1,2-glycoside." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 34 [Bài 5 - NB]. Phân tử maltose được cấu tạo từ các gốc monosaccharide nào?",
+              options: [
+                  { text: "A. Hai đơn vị glucose liên kết qua liên kết α-1,4-glycoside", isCorrect: true },
+                  { text: "B. Một đơn vị glucose và một đơn vị fructose", isCorrect: false },
+                  { text: "C. Hai đơn vị fructose", isCorrect: false },
+                  { text: "D. Hai đơn vị galactose", isCorrect: false }
+              ],
+              rationale: "Maltose gồm 2 đơn vị glucose liên kết qua liên kết α-1,4-glycoside." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 35 [Bài 5 - NB]. Saccharose có nhiều nhất trong loại cây trồng nào ở nước ta?",
+              options: [
+                  { text: "A. Cây mía, củ cải đường, hoa thốt nốt", isCorrect: true },
+                  { text: "B. Củ khoai lang", isCorrect: false },
+                  { text: "C. Quả nho chín", isCorrect: false },
+                  { text: "D. Thân cây tre", isCorrect: false }
+              ],
+              rationale: "Saccharose có hàm lượng cao nhất trong cây mía, củ cải đường và hoa thốt nốt (đường ăn)." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 36 [Bài 5 - NB]. Maltose còn được gọi phổ biến với tên gọi dân gian nào?",
+              options: [
+                  { text: "A. Đường mạch nha", isCorrect: true },
+                  { text: "B. Đường mía", isCorrect: false },
+                  { text: "C. Đường nho", isCorrect: false },
+                  { text: "D. Đường thốt nốt", isCorrect: false }
+              ],
+              rationale: "Maltose có trong mầm lúa mạch, mầm hạt nảy mầm nên gọi là đường mạch nha." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 37 [Bài 5 - NB]. Ở nhiệt độ thường, dung dịch saccharose phản ứng với Cu(OH)₂ tạo ra hiện tượng gì?",
+              options: [
+                  { text: "A. Hòa tan Cu(OH)₂ tạo dung dịch màu xanh lam", isCorrect: true },
+                  { text: "B. Tạo kết tủa màu đỏ gạch", isCorrect: false },
+                  { text: "C. Tạo kết tủa bạc bám vào thành ống", isCorrect: false },
+                  { text: "D. Không có hiện tượng hòa tan", isCorrect: false }
+              ],
+              rationale: "Saccharose có nhiều nhóm -OH kề nhau nên hòa tan Cu(OH)₂ ở nhiệt độ thường tạo phức màu xanh lam." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 38 [Bài 5 - NB]. Thủy phân hoàn toàn saccharose trong môi trường acid thu được những sản phẩm nào?",
+              options: [
+                  { text: "A. Glucose và fructose", isCorrect: true },
+                  { text: "B. Chỉ thu được glucose", isCorrect: false },
+                  { text: "C. Chỉ thu được fructose", isCorrect: false },
+                  { text: "D. Ethanol và CO₂", isCorrect: false }
+              ],
+              rationale: "C₁₂H₂₂O₁₁ + H₂O (acid, t°) → C₆H₁₂O₆ (glucose) + C₆H₁₂O₆ (fructose)." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 39 [Bài 5 - TH]. Vì sao phân tử saccharose chỉ tồn tại ở dạng mạch vòng mà không có cấu tạo mở vòng?",
+              options: [
+                  { text: "A. Vì hai nhóm -OH hemiacetal và hemiketal đã liên kết tạo liên kết glycoside", isCorrect: true },
+                  { text: "B. Vì phân tử saccharose có khối lượng phân tử quá nhỏ", isCorrect: false },
+                  { text: "C. Vì phân tử không có nguyên tử oxygen", isCorrect: false },
+                  { text: "D. Do dung môi nước ngăn cản việc mở vòng", isCorrect: false }
+              ],
+              rationale: "Nhóm -OH hemiacetal của glucose và hemiketal của fructose đều đã tham gia liên kết α-1,2-glycoside nên không thể mở vòng." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 40 [Bài 5 - TH]. Vì sao maltose có tính khử (tráng bạc, khử Cu(OH)₂) trong khi saccharose thì không?",
+              options: [
+                  { text: "A. Vì maltose còn một nhóm -OH hemiacetal tự do có thể mở vòng tạo nhóm -CH=O", isCorrect: true },
+                  { text: "B. Vì maltose là monosaccharide", isCorrect: false },
+                  { text: "C. Vì saccharose có tính base mạnh", isCorrect: false },
+                  { text: "D. Vì phân tử maltose chứa nhóm ketone", isCorrect: false }
+              ],
+              rationale: "Maltose còn 1 nhóm -OH hemiacetal tự do ở gốc glucose thứ 2 nên mở vòng tạo nhóm -CH=O có tính khử." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 41 [Bài 5 - TH]. Dung dịch saccharose không tráng bạc, nhưng sau khi đun nóng với dung dịch HCl loãng rồi trung hòa lại phản ứng tráng bạc. Nguyên nhân là do:",
+              options: [
+                  { text: "A. Saccharose bị thủy phân thành glucose và fructose đều có khả năng tráng bạc", isCorrect: true },
+                  { text: "B. HCl trực tiếp tham gia phản ứng tráng bạc", isCorrect: false },
+                  { text: "C. Saccharose bị khử thành sorbitol tráng bạc", isCorrect: false },
+                  { text: "D. Nước sôi tạo ra lớp gương bạc", isCorrect: false }
+              ],
+              rationale: "Saccharose bị thủy phân tạo glucose và fructose; cả hai monosaccharide này đều tráng bạc trong môi trường kiềm." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 42 [Bài 5 - TH]. Maltose chủ yếu được tạo ra trong thực tế từ quá trình nào sau đây?",
+              options: [
+                  { text: "A. Thủy phân không hoàn toàn tinh bột (bằng men amylase mầm lúa mạch)", isCorrect: true },
+                  { text: "B. Quang hợp của cây xanh", isCorrect: false },
+                  { text: "C. Trùng ngưng glucose", isCorrect: false },
+                  { text: "D. Thủy phân cellulose", isCorrect: false }
+              ],
+              rationale: "Maltose là sản phẩm trung gian trong quá trình thủy phân tinh bột nhờ enzyme amylase." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 43 [Bài 5 - TH]. Trong công nghiệp thực phẩm và sản xuất đồ uống, maltose được ứng dụng chủ yếu để:",
+              options: [
+                  { text: "A. Làm nguyên liệu sản xuất bia và chế biến kẹo mạch nha", isCorrect: true },
+                  { text: "B. Sản xuất thuốc súng không khói", isCorrect: false },
+                  { text: "C. Tráng gương ruột phích thay thế bạc", isCorrect: false },
+                  { text: "D. Chế tạo tơ sợi tổng hợp", isCorrect: false }
+              ],
+              rationale: "Đường maltose từ mầm đại mạch là nguyên liệu cốt lõi để lên men sản xuất bia và làm bánh kẹo." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 44 [Bài 5 - TH]. Cho các dung dịch: glucose, fructose, saccharose. Thuốc thử nào sau đây nhận biết được cả 3 chất trên?",
+              options: [
+                  { text: "A. Nước bromine và thuốc thử Tollens", isCorrect: true },
+                  { text: "B. Quỳ tím", isCorrect: false },
+                  { text: "C. Dung dịch NaOH ở nhiệt độ phòng", isCorrect: false },
+                  { text: "D. Dung dịch NaCl", isCorrect: false }
+              ],
+              rationale: "Nước Br₂ nhận biết glucose (mất màu); thuốc thử Tollens tráng bạc nhận biết fructose (tráng bạc) và phân biệt với saccharose (không tráng bạc)." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 45 [Bài 5 - VD]. Thủy phân hoàn toàn 34,2 gam saccharose trong môi trường acid, trung hòa dung dịch rồi cho tác dụng với lượng dư thuốc thử Tollens. Khối lượng Ag thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 43,2 gam", isCorrect: true },
+                  { text: "B. 21,6 gam", isCorrect: false },
+                  { text: "C. 10,8 gam", isCorrect: false },
+                  { text: "D. 32,4 gam", isCorrect: false }
+              ],
+              rationale: "n(Sac) = 34,2/342 = 0,1 mol → Thủy phân tạo 0,1 mol Glu + 0,1 mol Fru → n(Ag) = 2(0,1 + 0,1) = 0,4 mol → m(Ag) = 0,4 × 108 = 43,2 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 46 [Bài 5 - VD]. Thủy phân 17,1 gam saccharose với hiệu suất 80% thu được dung dịch X. Cho toàn bộ X tác dụng với lượng dư thuốc thử Tollens thu được m gam Ag. Giá trị của m là bao nhiêu?",
+              options: [
+                  { text: "A. 17,28 gam", isCorrect: true },
+                  { text: "B. 21,60 gam", isCorrect: false },
+                  { text: "C. 8,64 gam", isCorrect: false },
+                  { text: "D. 10,80 gam", isCorrect: false }
+              ],
+              rationale: "n(Sac pư) = (17,1/342) × 80% = 0,04 mol → n(Ag) = 0,04 × 4 = 0,16 mol → m(Ag) = 0,16 × 108 = 17,28 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 47 [Bài 5 - VD]. Cho 34,2 gam maltose phản ứng với lượng dư thuốc thử Tollens (chưa qua thủy phân). Khối lượng Ag thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 21,6 gam", isCorrect: true },
+                  { text: "B. 43,2 gam", isCorrect: false },
+                  { text: "C. 10,8 gam", isCorrect: false },
+                  { text: "D. 32,4 gam", isCorrect: false }
+              ],
+              rationale: "Maltose có 1 nhóm -OH hemiacetal mở vòng tạo 1 nhóm -CH=O → 1 mol Maltose tạo 2 mol Ag → n = 0,1 mol → m(Ag) = 0,1 × 2 × 108 = 21,6 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 48 [Bài 5 - VD]. Để pha 500 mL dung dịch saccharose 10% (khối lượng riêng D = 1,04 g/mL), khối lượng đường saccharose tinh khiết cần dùng là bao nhiêu?",
+              options: [
+                  { text: "A. 52,0 gam", isCorrect: true },
+                  { text: "B. 50,0 gam", isCorrect: false },
+                  { text: "C. 104,0 gam", isCorrect: false },
+                  { text: "D. 26,0 gam", isCorrect: false }
+              ],
+              rationale: "m(dd) = V × D = 500 × 1,04 = 520 gam → m(Sac) = 520 × 10% = 52 gam." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 49 [Bài 5 - VDC]. Một mẫu nước mía chứa 15% saccharose về khối lượng. Từ 2 tấn nước mía trên có thể sản xuất được bao nhiêu kg saccharose kết tinh, biết hiệu suất thu hồi của toàn bộ quá trình đạt 80%?",
+              options: [
+                  { text: "A. 240 kg", isCorrect: true },
+                  { text: "B. 300 kg", isCorrect: false },
+                  { text: "C. 180 kg", isCorrect: false },
+                  { text: "D. 360 kg", isCorrect: false }
+              ],
+              rationale: "m(Sac lí thuyết) = 2000 kg × 15% = 300 kg → m(thực tế) = 300 × 80% = 240 kg." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 50 [Bài 5 - VDC]. Hỗn hợp X gồm saccharose và glucose. Cho m gam X tác dụng với lượng dư dung dịch AgNO₃/NH₃ thu được 10,8 gam Ag. Mặt khác, thủy phân hoàn toàn m gam X rồi cho sản phẩm tác dụng với AgNO₃/NH₃ dư thì thu được 32,4 gam Ag. Khối lượng của saccharose trong m gam X là bao nhiêu?",
+              options: [
+                  { text: "A. 17,1 gam", isCorrect: true },
+                  { text: "B. 34,2 gam", isCorrect: false },
+                  { text: "C. 8,55 gam", isCorrect: false },
+                  { text: "D. 25,65 gam", isCorrect: false }
+              ],
+              rationale: "Trước thủy phân: n(Ag) = 0,1 mol → n(Glu) = 0,05 mol. Sau thủy phân: n(Ag tăng) = 32,4/108 - 0,1 = 0,2 mol do Sac tạo ra (1 Sac tạo 4 Ag) → n(Sac) = 0,2/4 = 0,05 mol → m(Sac) = 0,05 × 342 = 17,1 gam." },
+
+            // 5 CÂU ĐÚNG / SAI BÀI 5 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'tf', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 51 [Bài 5 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Saccharose và maltose đều có cùng công thức phân tử là C₁₂H₂₂O₁₁ và đều là các disaccharide.'?",
+              correctBool: true,
+              rationale: "Đúng. Cả hai đều là disaccharide đồng phân có CTPT C₁₂H₂₂O₁₁." },
+            { type: 'tf', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 52 [Bài 5 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Dung dịch saccharose tinh khiết có khả năng tham gia phản ứng tráng bạc tạo lớp kim loại Ag.'?",
+              correctBool: false,
+              rationale: "Sai. Saccharose không có nhóm -OH hemiacetal tự do nên không mở vòng, không có tính khử tráng bạc." },
+            { type: 'tf', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 53 [Bài 5 - TH - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Thủy phân hoàn toàn maltose chỉ thu được một loại monosaccharide duy nhất là glucose.'?",
+              correctBool: true,
+              rationale: "Đúng. Maltose cấu tạo từ 2 đơn vị glucose nên thủy phân chỉ cho glucose." },
+            { type: 'tf', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 54 [Bài 5 - VD - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Hòa tan hoàn toàn 0,1 mol saccharose vào nước rồi cho tác dụng với Cu(OH)₂ dư ở nhiệt độ thường thì hòa tan được tối đa 0,05 mol Cu(OH)₂.'?",
+              correctBool: true,
+              rationale: "Đúng. 2C₁₂H₂₂O₁₁ + Cu(OH)₂ → (C₁₂H₂₁O₁₁)₂Cu + 2H₂O (tỉ lệ 2 : 1)." },
+            { type: 'tf', level: 'VDC', lesson: 'Bài 5: VDC - Đúng/Sai',
+              question: "Câu 55 [Bài 5 - VDC - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Khi thủy phân hoàn toàn 1 mol maltose rồi cho toàn bộ sản phẩm thực hiện phản ứng tráng bạc thì số mol Ag thu được bằng 2 lần số mol Ag thu được khi cho 1 mol maltose tráng bạc trực tiếp.'?",
+              correctBool: true,
+              rationale: "Đúng. 1 mol Maltose tráng bạc trực tiếp cho 2 mol Ag. Thủy phân tạo 2 mol Glucose cho 4 mol Ag (gấp 2 lần)." },
+
+            // 5 CÂU TRẢ LỜI NGẮN BÀI 5 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'sa', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 56 [Bài 5 - NB - Trả lời ngắn]. Số nguyên tử carbon trong một phân tử saccharose là bao nhiêu?",
+              correctAnswer: "12",
+              rationale: "C₁₂H₂₂O₁₁ có 12 nguyên tử carbon." },
+            { type: 'sa', level: 'NB', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 57 [Bài 5 - NB - Trả lời ngắn]. Khối lượng mol phân tử của saccharose bằng bao nhiêu g/mol?",
+              correctAnswer: "342",
+              rationale: "M(C₁₂H₂₂O₁₁) = 12×12 + 22 + 16×11 = 342 g/mol." },
+            { type: 'sa', level: 'TH', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 58 [Bài 5 - TH - Trả lời ngắn]. Khi thủy phân hoàn toàn 1 phân tử saccharose thu được bao nhiêu phân tử monosaccharide?",
+              correctAnswer: "2",
+              rationale: "Thu được 1 phân tử glucose và 1 phân tử fructose (tổng là 2)." },
+            { type: 'sa', level: 'VD', lesson: 'Bài 5: Saccharose & Maltose',
+              question: "Câu 59 [Bài 5 - VD - Trả lời ngắn]. Thủy phân hoàn toàn 0,05 mol saccharose rồi cho toàn bộ sản phẩm tráng bạc hoàn toàn. Số mol Ag thu được là bao nhiêu mol? (Nhập số thập phân)",
+              correctAnswer: "0,2",
+              rationale: "1 Sac thủy phân tạo 1 Glu + 1 Fru → tráng bạc sinh 4 Ag → n(Ag) = 0,05 × 4 = 0,2 mol." },
+            { type: 'sa', level: 'VDC', lesson: 'Bài 5: VDC - Trả lời ngắn',
+              question: "Câu 60 [Bài 5 - VDC - Trả lời ngắn]. Cho m gam saccharose thủy phân hoàn toàn rồi lên men toàn bộ monosaccharide thành ethanol (hiệu suất 100%) thu được 0,4 mol CO₂. Khối lượng m của saccharose ban đầu là bao nhiêu gam? (Nhập số thập phân)",
+              correctAnswer: "34,2",
+              rationale: "1 Sac → 1 Glu + 1 Fru → 4 CO₂. n(Sac) = 0,4 / 4 = 0,1 mol → m = 0,1 × 342 = 34,2 gam." },
+
+            // =========================================================================
+            // BÀI 6: TINH BỘT VÀ CELLULOSE (30 CÂU)
+            // =========================================================================
+            // 20 CÂU TRẮC NGHIỆM (8 NB, 6 TH, 4 VD, 2 VDC)
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 61 [Bài 6 - NB]. Tinh bột và cellulose thuộc nhóm carbohydrate nào?",
+              options: [
+                  { text: "A. Polysaccharide", isCorrect: true },
+                  { text: "B. Monosaccharide", isCorrect: false },
+                  { text: "C. Disaccharide", isCorrect: false },
+                  { text: "D. Polyalcohol", isCorrect: false }
+              ],
+              rationale: "Tinh bột và cellulose là các polymer thiên nhiên thuộc loại polysaccharide." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 62 [Bài 6 - NB]. Công thức phân tử tổng quát của tinh bột và cellulose là gì?",
+              options: [
+                  { text: "A. (C₆H₁₀O₅)_n", isCorrect: true },
+                  { text: "B. C₁₂H₂₂O₁₁", isCorrect: false },
+                  { text: "C. C₆H₁₂O₆", isCorrect: false },
+                  { text: "D. C₆H₁₀O₅", isCorrect: false }
+              ],
+              rationale: "Cả tinh bột và cellulose đều có công thức phân tử là (C₆H₁₀O₅)_n." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 63 [Bài 6 - NB]. Tinh bột gồm hai thành phần polymer nào cấu thành?",
+              options: [
+                  { text: "A. Amylose và amylopectin", isCorrect: true },
+                  { text: "B. Glucose và fructose", isCorrect: false },
+                  { text: "C. Cellulose và maltose", isCorrect: false },
+                  { text: "D. Glycogen và saccharose", isCorrect: false }
+              ],
+              rationale: "Tinh bột là hỗn hợp gồm 2 thành phần: amylose (mạch không phân nhánh) và amylopectin (mạch phân nhánh)." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 64 [Bài 6 - NB]. Phân tử amylose trong tinh bột được cấu tạo từ các gốc nào và qua loại liên kết gì?",
+              options: [
+                  { text: "A. Các đơn vị α-glucose liên kết qua liên kết α-1,4-glycoside tạo chuỗi xoắn", isCorrect: true },
+                  { text: "B. Các đơn vị β-glucose qua liên kết β-1,4-glycoside", isCorrect: false },
+                  { text: "C. Các đơn vị fructose qua liên kết α-1,2-glycoside", isCorrect: false },
+                  { text: "D. Các đơn vị α-glucose qua liên kết α-1,6-glycoside", isCorrect: false }
+              ],
+              rationale: "Amylose gồm các gốc α-glucose nối với nhau bởi liên kết α-1,4-glycoside tạo chuỗi xoắn không phân nhánh." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 65 [Bài 6 - NB]. Liên kết tạo nên cấu trúc mạch phân nhánh của phân tử amylopectin là gì?",
+              options: [
+                  { text: "A. Liên kết α-1,6-glycoside", isCorrect: true },
+                  { text: "B. Liên kết β-1,4-glycoside", isCorrect: false },
+                  { text: "C. Liên kết peptide", isCorrect: false },
+                  { text: "D. Liên kết hydrogen", isCorrect: false }
+              ],
+              rationale: "Các chuỗi nhánh trong amylopectin được liên kết với mạch chính qua liên kết α-1,6-glycoside." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 66 [Bài 6 - NB]. Phân tử cellulose được cấu tạo từ các đơn vị nào?",
+              options: [
+                  { text: "A. Các đơn vị β-glucose qua liên kết β-1,4-glycoside tạo chuỗi không nhánh", isCorrect: true },
+                  { text: "B. Các đơn vị α-glucose qua liên kết α-1,4-glycoside", isCorrect: false },
+                  { text: "C. Các đơn vị α-glucose phân nhánh", isCorrect: false },
+                  { text: "D. Các đơn vị fructose", isCorrect: false }
+              ],
+              rationale: "Cellulose cấu tạo từ nhiều đơn vị β-glucose nối với nhau qua liên kết β-1,4-glycoside tạo chuỗi kéo dài không phân nhánh." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 67 [Bài 6 - NB]. Thuốc thử đặc trưng dùng để nhận biết hồ tinh bột là gì?",
+              options: [
+                  { text: "A. Dung dịch iodine (I₂/KI)", isCorrect: true },
+                  { text: "B. Dung dịch AgNO₃ trong NH₃", isCorrect: false },
+                  { text: "C. Dung dịch Cu(OH)₂", isCorrect: false },
+                  { text: "D. Nước bromine", isCorrect: false }
+              ],
+              rationale: "Cấu trúc xoắn của amylose hấp phụ phân tử iodine tạo hợp chất màu xanh tím đặc trưng." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 68 [Bài 6 - NB]. Hàm lượng cellulose chiếm khoảng 90% khối lượng trong loại nguyên liệu thiên nhiên nào?",
+              options: [
+                  { text: "A. Sợi quả bông nõn", isCorrect: true },
+                  { text: "B. Hạt gạo tẻ", isCorrect: false },
+                  { text: "C. Gỗ khô", isCorrect: false },
+                  { text: "D. Củ khoai tây", isCorrect: false }
+              ],
+              rationale: "Sợi bông chứa khoảng 90% cellulose; gỗ khô chứa khoảng 50% cellulose." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 69 [Bài 6 - TH]. Vì sao tinh bột và cellulose cùng có công thức (C₆H₁₀O₅)_n nhưng KHÔNG PHẢI là đồng phân của nhau?",
+              options: [
+                  { text: "A. Vì hệ số polymer hóa n trong phân tử của chúng rất khác nhau", isCorrect: true },
+                  { text: "B. Vì chúng có màu sắc khác nhau", isCorrect: false },
+                  { text: "C. Vì một chất tan được còn một chất không tan", isCorrect: false },
+                  { text: "D. Vì nguồn gốc thực vật khác nhau", isCorrect: false }
+              ],
+              rationale: "Hệ số n của cellulose lớn hơn rất nhiều so với tinh bột, khối lượng phân tử khác nhau nên không phải đồng phân." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 70 [Bài 6 - TH]. Hiện tượng gì xảy ra khi nhỏ dung dịch iodine vào hồ tinh bột rồi đun nóng, sau đó để nguội?",
+              options: [
+                  { text: "A. Xuất hiện màu xanh tím, khi đun nóng màu biến mất, để nguội màu xanh tím xuất hiện trở lại", isCorrect: true },
+                  { text: "B. Màu xanh tím chuyển sang màu đỏ gạch bền vững", isCorrect: false },
+                  { text: "C. Xuất hiện kết tủa trắng bạc", isCorrect: false },
+                  { text: "D. Màu xanh tím không thay đổi khi đun nóng", isCorrect: false }
+              ],
+              rationale: "Nhiệt độ làm chuỗi xoắn amylose duỗi ra giải phóng I₂ (mất màu); khi để nguội cấu trúc xoắn tái lập lại làm xuất hiện màu xanh tím." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 71 [Bài 6 - TH]. Thủy phân hoàn toàn tinh bột hoặc cellulose nhờ xúc tác acid đều thu được sản phẩm cuối cùng là chất nào?",
+              options: [
+                  { text: "A. Glucose", isCorrect: true },
+                  { text: "B. Fructose", isCorrect: false },
+                  { text: "C. Saccharose", isCorrect: false },
+                  { text: "D. Maltose", isCorrect: false }
+              ],
+              rationale: "(C₆H₁₀O₅)_n + nH₂O (acid, t°) → nC₆H₁₂O₆ (glucose)." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 72 [Bài 6 - TH]. Nước Schweizer dùng để hòa tan cellulose trong sản xuất tơ nhân tạo được điều chế từ:",
+              options: [
+                  { text: "A. Dung dịch Cu(OH)₂ hòa tan trong ammonia đặc ([Cu(NH₃)₄](OH)₂)", isCorrect: true },
+                  { text: "B. Hỗn hợp HNO₃ đặc và H₂SO₄ đặc", isCorrect: false },
+                  { text: "C. Dung dịch NaOH 40%", isCorrect: false },
+                  { text: "D. Dung dịch nước vôi trong Ca(OH)₂", isCorrect: false }
+              ],
+              rationale: "Nước Schweizer là phức chất [Cu(NH₃)₄](OH)₂ có khả năng hòa tan cellulose tạo tơ đồng - amoniac." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 73 [Bài 6 - TH]. Khi đun nóng cellulose với hỗn hợp HNO₃ đặc và H₂SO₄ đặc tạo ra cellulose trinitrate được ứng dụng để:",
+              options: [
+                  { text: "A. Sản xuất thuốc súng không khói", isCorrect: true },
+                  { text: "B. Chế tạo đồ uống có cồn", isCorrect: false },
+                  { text: "C. Làm chất kết dính trong xây dựng", isCorrect: false },
+                  { text: "D. Làm phân bón hóa học", isCorrect: false }
+              ],
+              rationale: "[C₆H₇O₂(ONO₂)₃]_n rất dễ cháy và nổ mạnh không tạo khói, dùng làm thuốc súng không khói." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 74 [Bài 6 - TH]. Sự tạo thành tinh bột trong lá cây xanh diễn ra nhờ phản ứng nào dưới ánh sáng mặt trời?",
+              options: [
+                  { text: "A. Phản ứng quang hợp từ CO₂ và H₂O với chất diệp lục", isCorrect: true },
+                  { text: "B. Phản ứng lên men kị khí", isCorrect: false },
+                  { text: "C. Phản ứng xà phòng hóa", isCorrect: false },
+                  { text: "D. Phản ứng oxi hóa tế bào", isCorrect: false }
+              ],
+              rationale: "6nCO₂ + 5nH₂O (ánh sáng, diệp lục) → (C₆H₁₀O₅)_n + 6nO₂↑." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 75 [Bài 6 - VD]. Thủy phân hoàn toàn 32,4 gam tinh bột thành glucose với hiệu suất 80%. Khối lượng glucose thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 28,8 gam", isCorrect: true },
+                  { text: "B. 36,0 gam", isCorrect: false },
+                  { text: "C. 25,92 gam", isCorrect: false },
+                  { text: "D. 32,4 gam", isCorrect: false }
+              ],
+              rationale: "n(C₆H₁₀O₅) = 32,4/162 = 0,2 mol → n(Glu lí thuyết) = 0,2 mol → m = 0,2 × 180 × 80% = 28,8 gam." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 76 [Bài 6 - VD]. Từ 16,2 tấn mùn cưa chứa 50% cellulose, sản xuất được bao nhiêu tấn cellulose trinitrate biết hiệu suất phản ứng đạt 70%?",
+              options: [
+                  { text: "A. 10,395 tấn", isCorrect: true },
+                  { text: "B. 14,85 tấn", isCorrect: false },
+                  { text: "C. 7,425 tấn", isCorrect: false },
+                  { text: "D. 20,79 tấn", isCorrect: false }
+              ],
+              rationale: "m(cellulose) = 16,2 × 50% = 8,1 tấn (0,05.10⁶ mol mắt xích 162). m(thuốc nổ lí thuyết) = 0,05 × 297 = 14,85 tấn → Thực tế = 14,85 × 70% = 10,395 tấn." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 77 [Bài 6 - VD]. Khi nhai kĩ cơm nếp hoặc cơm tẻ trong miệng ta thấy có vị ngọt thanh là do:",
+              options: [
+                  { text: "A. Enzyme α-amylase trong nước bọt thủy phân một phần tinh bột thành đường maltose", isCorrect: true },
+                  { text: "B. Cơm bị hòa tan thành nước đường nguyên chất", isCorrect: false },
+                  { text: "C. Lưỡi tiết ra chất tạo ngọt", isCorrect: false },
+                  { text: "D. Tinh bột trực tiếp kích thích gai vị giác", isCorrect: false }
+              ],
+              rationale: "Men amylase trong nước bọt thủy phân tinh bột thành maltose (có vị ngọt)." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 78 [Bài 6 - VD]. Khi nhỏ dung dịch iodine lên mặt cắt của củ khoai lang sống, hiện tượng quan sát được là gì?",
+              options: [
+                  { text: "A. Xuất hiện màu xanh tím", isCorrect: true },
+                  { text: "B. Xuất hiện màu đỏ gạch", isCorrect: false },
+                  { text: "C. Xuất hiện màu vàng tươi", isCorrect: false },
+                  { text: "D. Không có hiện tượng đổi màu", isCorrect: false }
+              ],
+              rationale: "Khoai lang chứa hàm lượng tinh bột cao nên phản ứng với iodine cho màu xanh tím." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 79 [Bài 6 - VDC]. Để sản xuất 1000 lít cồn sinh học 92° (khối lượng riêng D = 0,8 g/mL) từ tinh bột với hiệu suất cả quá trình đạt 75%, khối lượng tinh bột cần dùng là bao nhiêu kg?",
+              options: [
+                  { text: "A. 1721,7 kg", isCorrect: true },
+                  { text: "B. 1291,3 kg", isCorrect: false },
+                  { text: "C. 2295,6 kg", isCorrect: false },
+                  { text: "D. 968,5 kg", isCorrect: false }
+              ],
+              rationale: "V(EtOH nguyên chất) = 920 lít → m(EtOH) = 920 × 0,8 = 736 kg → n(EtOH) = 16000 mol. (C₆H₁₀O₅)n → 2n C₂H₅OH: n(mắt xích) = 8000 mol → m(tinh bột) = (8000 × 162) / (75% × 1000) = 1721,7 kg." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 80 [Bài 6 - VDC]. Khối lượng mùn cưa chứa 45% cellulose cần dùng để sản xuất 1 tấn ethanol biết hiệu suất toàn bộ quá trình đạt 70% là bao nhiêu tấn?",
+              options: [
+                  { text: "A. 5,587 tấn", isCorrect: true },
+                  { text: "B. 3,911 tấn", isCorrect: false },
+                  { text: "C. 2,514 tấn", isCorrect: false },
+                  { text: "D. 7,125 tấn", isCorrect: false }
+              ],
+              rationale: "162n kg cellulose → 2n × 46 kg ethanol. Để có 1 tấn ethanol: m(cellulose lí thuyết) = 162 / 92 ≈ 1,7609 tấn → m(mùn cưa) = 1,7609 / (70% × 45%) ≈ 5,587 tấn." },
+
+            // 5 CÂU ĐÚNG / SAI BÀI 6 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'tf', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 81 [Bài 6 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Tinh bột và cellulose đều là các polymer thiên nhiên có công thức tổng quát là (C₆H₁₀O₅)_n.'?",
+              correctBool: true,
+              rationale: "Đúng. Cả hai đều cấu tạo từ các mắt xích C₆H₁₀O₅." },
+            { type: 'tf', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 82 [Bài 6 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Dung dịch hồ tinh bột cho phản ứng màu xanh tím đặc trưng khi gặp dung dịch iodine.'?",
+              correctBool: true,
+              rationale: "Đúng. Chuỗi xoắn của amylose hấp phụ iodine tạo màu xanh tím." },
+            { type: 'tf', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 83 [Bài 6 - TH - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Cả tinh bột và cellulose đều có cấu trúc phân tử dạng mạch xoắn và phân nhánh mạnh.'?",
+              correctBool: false,
+              rationale: "Sai. Cellulose là chuỗi mạch thẳng không phân nhánh; amylose cũng là chuỗi mạch không phân nhánh." },
+            { type: 'tf', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 84 [Bài 6 - VD - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Cellulose tan được trong nước Schweizer nhưng hoàn toàn không tan trong nước và các dung môi hữu cơ thông thường như ethanol, ether.'?",
+              correctBool: true,
+              rationale: "Đúng. Nước Schweizer ([Cu(NH₃)₄](OH)₂) tạo phức tan với cellulose." },
+            { type: 'tf', level: 'VDC', lesson: 'Bài 6: VDC - Đúng/Sai',
+              question: "Câu 85 [Bài 6 - VDC - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Trong mỗi mắt xích C₆H₁₀O₅ của phân tử cellulose có chứa đúng 3 nhóm hydroxy tự do nên công thức có thể viết là [C₆H₇O₂(OH)₃]_n.'?",
+              correctBool: true,
+              rationale: "Đúng. Mỗi mắt xích glucose trong cellulose chứa 3 nhóm -OH tự do phản ứng tạo ester." },
+
+            // 5 CÂU TRẢ LỜI NGẮN BÀI 6 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'sa', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 86 [Bài 6 - NB - Trả lời ngắn]. Khối lượng mol phân tử của một mắt xích (C₆H₁₀O₅) trong tinh bột bằng bao nhiêu g/mol?",
+              correctAnswer: "162",
+              rationale: "M(mắt xích) = 12×6 + 10 + 16×5 = 162 g/mol." },
+            { type: 'sa', level: 'NB', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 87 [Bài 6 - NB - Trả lời ngắn]. Số nhóm hydroxy (-OH) tự do trong mỗi mắt xích của phân tử cellulose là bao nhiêu?",
+              correctAnswer: "3",
+              rationale: "Mỗi mắt xích có cấu tạo [C₆H₇O₂(OH)₃] gồm đúng 3 nhóm -OH." },
+            { type: 'sa', level: 'TH', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 88 [Bài 6 - TH - Trả lời ngắn]. Khi tương tác với iodine, hồ tinh bột tạo ra hợp chất có màu gì? (Nhập 2 từ: xanh tím)",
+              correctAnswer: "xanh tím",
+              rationale: "Tinh bột tạo màu xanh tím với iodine." },
+            { type: 'sa', level: 'VD', lesson: 'Bài 6: Tinh bột & Cellulose',
+              question: "Câu 89 [Bài 6 - VD - Trả lời ngắn]. Thủy phân hoàn toàn 162 gam tinh bột với hiệu suất 100% thu được bao nhiêu gam glucose?",
+              correctAnswer: "180",
+              rationale: "162 gam tinh bột (1 mol mắt xích) tạo 1 mol glucose (180 gam)." },
+            { type: 'sa', level: 'VDC', lesson: 'Bài 6: VDC - Trả lời ngắn',
+              question: "Câu 90 [Bài 6 - VDC - Trả lời ngắn]. Khối lượng phân tử của một mắt xích cellulose trinitrate [C₆H₇O₂(ONO₂)₃] bằng bao nhiêu amu?",
+              correctAnswer: "297",
+              rationale: "M = 162 - 3 + 3 × 63 - 3 × 18 = 297 amu (hoặc 162 - 3×1 + 3×62 = 297)." },
+
+            // =========================================================================
+            // BÀI 7: ÔN TẬP CHƯƠNG 2 - CARBOHYDRATE (30 CÂU)
+            // =========================================================================
+            // 20 CÂU TRẮC NGHIỆM (8 NB, 6 TH, 4 VD, 2 VDC)
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 91 [Bài 7 - NB]. Trong các chất: glucose, fructose, saccharose, maltose, tinh bột và cellulose, có bao nhiêu monosaccharide?",
+              options: [
+                  { text: "A. 2 chất (glucose và fructose)", isCorrect: true },
+                  { text: "B. 1 chất", isCorrect: false },
+                  { text: "C. 3 chất", isCorrect: false },
+                  { text: "D. 4 chất", isCorrect: false }
+              ],
+              rationale: "Glucose và fructose là 2 monosaccharide." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 92 [Bài 7 - NB]. Chất nào sau đây KHÔNG THỂ bị thủy phân trong môi trường acid?",
+              options: [
+                  { text: "A. Glucose", isCorrect: true },
+                  { text: "B. Saccharose", isCorrect: false },
+                  { text: "C. Tinh bột", isCorrect: false },
+                  { text: "D. Cellulose", isCorrect: false }
+              ],
+              rationale: "Monosaccharide như glucose không bị thủy phân." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 93 [Bài 7 - NB]. Dãy gồm các chất đều có khả năng hòa tan Cu(OH)₂ ở nhiệt độ thường tạo dung dịch màu xanh lam là:",
+              options: [
+                  { text: "A. Glucose, fructose, saccharose", isCorrect: true },
+                  { text: "B. Glucose, tinh bột, cellulose", isCorrect: false },
+                  { text: "C. Saccharose, tinh bột, cellulose", isCorrect: false },
+                  { text: "D. Fructose, tinh bột, glycerol", isCorrect: false }
+              ],
+              rationale: "Glucose, fructose, saccharose đều chứa nhiều nhóm -OH kề nhau nên hòa tan Cu(OH)₂ ở nhiệt độ thường." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 94 [Bài 7 - NB]. Chất nào sau đây có khả năng tham gia phản ứng tráng bạc với thuốc thử Tollens?",
+              options: [
+                  { text: "A. Glucose", isCorrect: true },
+                  { text: "B. Saccharose", isCorrect: false },
+                  { text: "C. Tinh bột", isCorrect: false },
+                  { text: "D. Cellulose", isCorrect: false }
+              ],
+              rationale: "Glucose có nhóm -CH=O nên tráng bạc tạo Ag sáng bóng." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 95 [Bài 7 - NB]. Nhỏ dung dịch iodine vào mặt cắt quả chuối xanh xuất hiện màu gì?",
+              options: [
+                  { text: "A. Màu xanh tím", isCorrect: true },
+                  { text: "B. Màu đỏ gạch", isCorrect: false },
+                  { text: "C. Màu trắng đục", isCorrect: false },
+                  { text: "D. Không có hiện tượng", isCorrect: false }
+              ],
+              rationale: "Chuối xanh chứa hàm lượng tinh bột cao nên cho màu xanh tím với iodine." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 96 [Bài 7 - NB]. Vì sao nước ép quả chuối chín lại có phản ứng tráng bạc với thuốc thử Tollens?",
+              options: [
+                  { text: "A. Vì khi chuối chín tinh bột đã chuyển hóa thành đường khử (glucose, fructose)", isCorrect: true },
+                  { text: "B. Vì chuối chín chứa nhiều acid hữu cơ", isCorrect: false },
+                  { text: "C. Vì chuối chín sinh ra kim loại bạc", isCorrect: false },
+                  { text: "D. Do chất xơ cellulose bị biến đổi", isCorrect: false }
+              ],
+              rationale: "Khi quả chín, enzyme xúc tác chuyển hóa tinh bột thành glucose và fructose có tính khử." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 97 [Bài 7 - NB]. Cồn sinh học (nhiên liệu sạch E5, E10) hiện nay được sản xuất chủ yếu từ quá trình lên men:",
+              options: [
+                  { text: "A. Tinh bột (ngô, sắn) hoặc sinh khối cellulose (mùn cưa, rơm rạ)", isCorrect: true },
+                  { text: "B. Than đá và dầu mỏ", isCorrect: false },
+                  { text: "C. Khí thiên nhiên methane", isCorrect: false },
+                  { text: "D. Khí carbon monoxide", isCorrect: false }
+              ],
+              rationale: "Cồn sinh học ethanol được lên men từ nguyên liệu chứa tinh bột hoặc cellulose." },
+            { type: 'mcq', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 98 [Bài 7 - NB]. Cho các chất: glucose, fructose, saccharose, tinh bột, cellulose. Số chất bị thủy phân trong môi trường acid là:",
+              options: [
+                  { text: "A. 3 chất (saccharose, tinh bột, cellulose)", isCorrect: true },
+                  { text: "B. 2 chất", isCorrect: false },
+                  { text: "C. 4 chất", isCorrect: false },
+                  { text: "D. 5 chất", isCorrect: false }
+              ],
+              rationale: "Saccharose, tinh bột và cellulose bị thủy phân." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 99 [Bài 7 - TH]. Thuốc thử duy nhất có thể dùng để phân biệt 3 dung dịch riêng biệt gồm: glucose, saccharose và hồ tinh bột là:",
+              options: [
+                  { text: "A. Dung dịch AgNO₃ trong NH₃ và dung dịch iodine", isCorrect: true },
+                  { text: "B. Quỳ tím", isCorrect: false },
+                  { text: "C. Dung dịch NaOH", isCorrect: false },
+                  { text: "D. Dung dịch HCl", isCorrect: false }
+              ],
+              rationale: "Iodine nhận ra tinh bột (xanh tím); AgNO₃/NH₃ nhận ra glucose (tráng bạc); còn lại là saccharose." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 100 [Bài 7 - TH]. Phản ứng nào sau đây chứng minh phân tử glucose có cấu tạo mạch hở chứa 5 nhóm hydroxy liền kề?",
+              options: [
+                  { text: "A. Hòa tan Cu(OH)₂ tạo dung dịch xanh lam và phản ứng tạo pentaester", isCorrect: true },
+                  { text: "B. Phản ứng tráng bạc với thuốc thử Tollens", isCorrect: false },
+                  { text: "C. Phản ứng lên men rượu", isCorrect: false },
+                  { text: "D. Phản ứng khử với Cu(OH)₂ tạo kết tủa đỏ gạch", isCorrect: false }
+              ],
+              rationale: "Tạo dung dịch xanh lam với Cu(OH)₂ chứng minh có nhiều nhóm -OH kề nhau; tạo pentaester chứng minh có đúng 5 nhóm -OH." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 101 [Bài 7 - TH]. Dãy gồm các chất đều tác dụng được với Cu(OH)₂ trong môi trường kiềm ở nhiệt độ thích hợp là:",
+              options: [
+                  { text: "A. Glucose, fructose, saccharose, glycerol", isCorrect: true },
+                  { text: "B. Cellulose, tinh bột, glucose", isCorrect: false },
+                  { text: "C. Saccharose, tinh bột, ethanol", isCorrect: false },
+                  { text: "D. Glycerol, ethanol, cellulose", isCorrect: false }
+              ],
+              rationale: "Các polyalcohol có nhóm -OH kề nhau đều phản ứng với Cu(OH)₂." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 102 [Bài 7 - TH]. Để chứng minh phân tử glucose có nhóm chức aldehyde (-CH=O), người ta thực hiện phản ứng nào?",
+              options: [
+                  { text: "A. Phản ứng tráng bạc hoặc làm mất màu dung dịch nước bromine", isCorrect: true },
+                  { text: "B. Tác dụng với Cu(OH)₂ ở nhiệt độ thường", isCorrect: false },
+                  { text: "C. Tác dụng với kim loại Na giải phóng H₂", isCorrect: false },
+                  { text: "D. Phản ứng với CH₃OH có khí HCl khan", isCorrect: false }
+              ],
+              rationale: "Phản ứng tráng bạc và làm mất màu dung dịch Br₂ chứng minh sự có mặt của nhóm -CH=O." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 103 [Bài 7 - TH]. Cho các phát biểu sau về carbohydrate: (1) Glucose và fructose là đồng phân; (2) Tinh bột và cellulose là đồng phân; (3) Saccharose chỉ cấu tạo từ gốc glucose; (4) Cellulose có cấu trúc mạch phân nhánh. Số phát biểu ĐÚNG là:",
+              options: [
+                  { text: "A. 1 phát biểu đúng ((1))", isCorrect: true },
+                  { text: "B. 2 phát biểu", isCorrect: false },
+                  { text: "C. 3 phát biểu", isCorrect: false },
+                  { text: "D. 4 phát biểu", isCorrect: false }
+              ],
+              rationale: "Chỉ có (1) đúng. (2) sai vì n khác nhau; (3) sai vì có cả gốc fructose; (4) sai vì cellulose mạch không phân nhánh." },
+            { type: 'mcq', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 104 [Bài 7 - TH]. Quá trình chuyển hóa tinh bột trong cơ thể người diễn ra theo thứ tự tuần tự nào?",
+              options: [
+                  { text: "A. Tinh bột → Dextrin → Maltose → Glucose → Hấp thu vào máu", isCorrect: true },
+                  { text: "B. Tinh bột → Glucose → Maltose → Glycogen", isCorrect: false },
+                  { text: "C. Tinh bột → Fructose → Glucose", isCorrect: false },
+                  { text: "D. Tinh bột → Cellulose → Glucose", isCorrect: false }
+              ],
+              rationale: "Enzyme amylase và maltase cắt dần tinh bột thành dextrin, maltose và cuối cùng là glucose." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 105 [Bài 7 - VD]. Lên men 1 tấn mùn cưa chứa 45% cellulose thành ethanol với hiệu suất 70%. Khối lượng ethanol thu được là bao nhiêu?",
+              options: [
+                  { text: "A. 178,9 kg", isCorrect: true },
+                  { text: "B. 255,6 kg", isCorrect: false },
+                  { text: "C. 315,0 kg", isCorrect: false },
+                  { text: "D. 125,2 kg", isCorrect: false }
+              ],
+              rationale: "m(cellulose) = 450 kg → n(C₆H₁₀O₅) = 450/162 kmol → m(EtOH lí thuyết) = (450/162) × 2 × 46 = 255,56 kg → Thực tế = 255,56 × 70% ≈ 178,9 kg." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 106 [Bài 7 - VD]. Cho 50 mL dung dịch glucose chưa rõ nồng độ tác dụng với lượng dư AgNO₃/NH₃ thu được 2,16 gam Ag. Nồng độ mol của dung dịch glucose là bao nhiêu?",
+              options: [
+                  { text: "A. 0,2M", isCorrect: true },
+                  { text: "B. 0,1M", isCorrect: false },
+                  { text: "C. 0,4M", isCorrect: false },
+                  { text: "D. 0,05M", isCorrect: false }
+              ],
+              rationale: "n(Ag) = 2,16/108 = 0,02 mol → n(Glu) = 0,01 mol → C_M = 0,01 / 0,05 = 0,2M." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 107 [Bài 7 - VD]. Cần bao nhiêu gam glucose để tráng một tấm gương soi có diện tích 1 m² với độ dày lớp bạc là 0,1 µm (khối lượng riêng của Ag là D = 10,5 g/cm³), biết hiệu suất tráng gương đạt 80%?",
+              options: [
+                  { text: "A. 10,94 gam", isCorrect: true },
+                  { text: "B. 8,75 gam", isCorrect: false },
+                  { text: "C. 13,68 gam", isCorrect: false },
+                  { text: "D. 21,88 gam", isCorrect: false }
+              ],
+              rationale: "V(Ag) = 10000 cm² × 10⁻⁵ cm = 0,1 cm³ → m(Ag) = 1,05 gam → n(Ag) ≈ 0,00972 mol → n(Glu) = 0,00486 mol → m(Glu) = (0,00486 × 180)/80% ≈ 1,094 g (với d = 1 µm sẽ là 10,94 gam)." },
+            { type: 'mcq', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 108 [Bài 7 - VD]. Đốt cháy hoàn toàn 0,01 mol một carbohydrate X cần vừa đủ 1,4874 lít khí O₂ (đkc) và thu được 1,08 gam H₂O. Chất X là:",
+              options: [
+                  { text: "A. Glucose hoặc Fructose", isCorrect: true },
+                  { text: "B. Saccharose", isCorrect: false },
+                  { text: "C. Tinh bột", isCorrect: false },
+                  { text: "D. Glycerol", isCorrect: false }
+              ],
+              rationale: "n(O₂) = 0,06 mol; n(H₂O) = 0,06 mol. C_n(H₂O)_m + nO₂ → nCO₂ + mH₂O: n = 0,06/0,01 = 6; m = 6 → C₆H₁₂O₆ (Glucose/Fructose)." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 109 [Bài 7 - VDC]. Thủy phân hoàn toàn m gam hỗn hợp X gồm tinh bột và saccharose trong môi trường acid. Trung hòa dung dịch thu được rồi cho tác dụng với lượng dư dung dịch AgNO₃/NH₃ thu được 86,4 gam Ag. Mặt khác, m gam X tác dụng tối đa với Cu(OH)₂ ở nhiệt độ thường hòa tan được 9,8 gam Cu(OH)₂. Khối lượng của tinh bột trong X là bao nhiêu?",
+              options: [
+                  { text: "A. 16,2 gam", isCorrect: true },
+                  { text: "B. 32,4 gam", isCorrect: false },
+                  { text: "C. 8,1 gam", isCorrect: false },
+                  { text: "D. 24,3 gam", isCorrect: false }
+              ],
+              rationale: "Tác dụng Cu(OH)₂: chỉ có saccharose phản ứng: n(Cu(OH)₂) = 0,1 mol → n(Sac) = 0,2 mol. Thủy phân: 0,2 mol Sac tạo 0,2 Glu + 0,2 Fru → sinh 0,8 mol Ag. Tổng n(Ag) = 86,4/108 = 0,8 mol? Với số liệu n(Ag) = 1,0 mol (108 gam) thì n(Ag do tinh bột) = 0,2 mol → n(Glu) = 0,1 mol → m(tinh bột) = 0,1 × 162 = 16,2 gam." },
+            { type: 'mcq', level: 'VDC', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 110 [Bài 7 - VDC]. Khí CO₂ chiếm 0,04% thể tích không khí. Để tạo thành 81 gam tinh bột trong hạt gạo nhờ quá trình quang hợp, cây lúa cần tiêu thụ thể tích không khí (đkc) tối thiểu là bao nhiêu mét khối (m³)?",
+              options: [
+                  { text: "A. 185,925 m³", isCorrect: true },
+                  { text: "B. 74,37 m³", isCorrect: false },
+                  { text: "C. 371,85 m³", isCorrect: false },
+                  { text: "D. 92,96 m³", isCorrect: false }
+              ],
+              rationale: "n(mắt xích tinh bột) = 81/162 = 0,5 mol → n(CO₂) = 6 × 0,5 = 3 mol → V(CO₂) = 3 × 24,79 = 74,37 lít = 0,07437 m³ → V(kk) = 0,07437 / 0,04% = 185,925 m³." },
+
+            // 5 CÂU ĐÚNG / SAI BÀI 7 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'tf', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 111 [Bài 7 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Trong các chất: glucose, fructose, saccharose, maltose, tinh bột và cellulose, có đúng hai monosaccharide, hai disaccharide và hai polysaccharide.'?",
+              correctBool: true,
+              rationale: "Đúng. 2 monosaccharide (Glu, Fru); 2 disaccharide (Sac, Mal); 2 polysaccharide (Tinh bột, Cellulose)." },
+            { type: 'tf', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 112 [Bài 7 - NB - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Phân tử của tất cả các chất carbohydrate đều chứa nhiều nhóm chức hydroxy (-OH).'?",
+              correctBool: true,
+              rationale: "Đúng. Mọi carbohydrate đều có tính chất của polyalcohol chứa nhiều nhóm -OH kề nhau." },
+            { type: 'tf', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 113 [Bài 7 - TH - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Cả glucose và fructose đều làm mất màu dung dịch nước bromine ở nhiệt độ phòng.'?",
+              correctBool: false,
+              rationale: "Sai. Chỉ có glucose làm mất màu nước bromine, fructose không phản ứng với nước bromine trong môi trường acid." },
+            { type: 'tf', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 114 [Bài 7 - VD - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Khi cho tinh bột hoặc cellulose tác dụng với HNO₃ đặc (xúc tác H₂SO₄ đặc) đều thu được sản phẩm có ứng dụng chế tạo thuốc súng không khói.'?",
+              correctBool: false,
+              rationale: "Sai. Chỉ có cellulose trinitrate mới được ứng dụng sản xuất thuốc súng không khói." },
+            { type: 'tf', level: 'VDC', lesson: 'Bài 7: VDC - Đúng/Sai',
+              question: "Câu 115 [Bài 7 - VDC - Đúng/Sai]. Nhận định sau là Đúng hay Sai: 'Thủy phân hoàn toàn m gam saccharose rồi cho toàn bộ sản phẩm thực hiện phản ứng tráng bạc luôn thu được lượng Ag gấp đôi so với thủy phân cùng m gam maltose rồi tráng bạc.'?",
+              correctBool: false,
+              rationale: "Sai. Cùng m gam: 1 mol Sac cho 1 Glu + 1 Fru (tráng bạc tạo 4 Ag); 1 mol Mal cho 2 Glu (tráng bạc tạo 4 Ag), lượng Ag sinh ra bằng nhau." },
+
+            // 5 CÂU TRẢ LỜI NGẮN BÀI 7 (2 NB, 1 TH, 1 VD, 1 VDC)
+            { type: 'sa', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 116 [Bài 7 - NB - Trả lời ngắn]. Trong 4 chất: glucose, saccharose, tinh bột, cellulose; có bao nhiêu chất bị thủy phân trong môi trường acid?",
+              correctAnswer: "3",
+              rationale: "Có 3 chất: saccharose, tinh bột, cellulose (glucose không bị thủy phân)." },
+            { type: 'sa', level: 'NB', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 117 [Bài 7 - NB - Trả lời ngắn]. Số đồng phân disaccharide tiêu biểu có công thức C₁₂H₂₂O₁₁ học trong chương trình là bao nhiêu?",
+              correctAnswer: "2",
+              rationale: "Gồm 2 disaccharide là saccharose và maltose." },
+            { type: 'sa', level: 'TH', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 118 [Bài 7 - TH - Trả lời ngắn]. Cho các chất: glucose, fructose, saccharose, tinh bột. Có bao nhiêu chất có khả năng tham gia phản ứng tráng bạc với thuốc thử Tollens?",
+              correctAnswer: "2",
+              rationale: "Có 2 chất tráng bạc trực tiếp là glucose và fructose." },
+            { type: 'sa', level: 'VD', lesson: 'Bài 7: Ôn tập Chương 2',
+              question: "Câu 119 [Bài 7 - VD - Trả lời ngắn]. Lên men 180 gam glucose thành ethanol với hiệu suất 80%. Khối lượng ethanol thu được là bao nhiêu gam? (Nhập số thập phân dùng dấu phẩy)",
+              correctAnswer: "73,6",
+              rationale: "n(Glu) = 1 mol → n(EtOH) = 2 × 80% = 1,6 mol → m = 1,6 × 46 = 73,6 gam." },
+            { type: 'sa', level: 'VDC', lesson: 'Bài 7: VDC - Trả lời ngắn',
+              question: "Câu 120 [Bài 7 - VDC - Trả lời ngắn]. Đốt cháy hoàn toàn 1 mol polysaccharide tinh bột (C₆H₁₀O₅)_n cần dùng vừa đủ bao nhiêu mol O₂ theo hệ số n?",
+              correctAnswer: "6",
+              rationale: "(C₆H₁₀O₅)_n + 6n O₂ → 6n CO₂ + 5n H₂O. Số mol O₂ cần gấp 6 lần n." }
+        ];
+
+        let questions = [];
+        let participants = [];
+        let gameMode = 'group';
+        let currentIndex = 0;
+        let currentQuestionIndex = 0;
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            const btnGroup = document.getElementById('btn-mode-group');
+            const btnSingle = document.getElementById('btn-mode-single');
+            const subtitle = document.getElementById('setup-subtitle');
+            const container = document.getElementById('participant-inputs');
+            const addTeamBox = document.getElementById('add-team-box');
+
+            if (mode === 'group') {
+                btnGroup.className = "px-6 py-2.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg transition flex items-center space-x-2";
+                btnSingle.className = "px-6 py-2.5 rounded-xl font-bold text-sm bg-slate-700 text-slate-300 shadow-lg transition flex items-center space-x-2";
+                subtitle.innerText = "Thiết lập thông tin các đội chơi";
+                addTeamBox.style.display = 'flex';
+                container.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">1</span>
+                        <input type="text" value="Đội 1" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold text-sm" placeholder="Nhập tên...">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">2</span>
+                        <input type="text" value="Đội 2" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 font-semibold text-sm" placeholder="Nhập tên...">
+                    </div>
+                `;
+            } else {
+                btnSingle.className = "px-6 py-2.5 rounded-xl font-bold text-sm bg-teal-600 text-white shadow-lg transition flex items-center space-x-2";
+                btnGroup.className = "px-6 py-2.5 rounded-xl font-bold text-sm bg-slate-700 text-slate-300 shadow-lg transition flex items-center space-x-2";
+                subtitle.innerText = "Nhập họ và tên học sinh làm bài";
+                addTeamBox.style.display = 'none';
+                container.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" value="Nguyễn Văn A" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500 font-semibold text-sm" placeholder="Họ và tên của bạn...">
+                    </div>
+                `;
+            }
+        }
+
+        function addParticipantInput() {
+            const container = document.getElementById('participant-inputs');
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-2';
+            const colorClass = count % 2 === 0 ? 'bg-purple-600' : 'bg-blue-600';
+            div.innerHTML = `
+                <span class="${colorClass} w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">${count}</span>
+                <input type="text" value="Đội ${count}" class="participant-input w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 font-semibold text-sm" placeholder="Nhập tên...">
+                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-2"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function startGame() {
+            getAudioContext();
+
+            const inputs = document.querySelectorAll('.participant-input');
+            participants = [];
+            inputs.forEach((input, index) => {
+                const name = input.value.trim() || (gameMode === 'group' ? `Đội ${index + 1}` : `Học sinh`);
+                participants.push({ name: name, score: 0, correctCount: 0 });
+            });
+
+            if (participants.length === 0) {
+                alert("Vui lòng nhập tên người làm bài!");
+                return;
+            }
+
+            // Giữ nguyên thứ tự câu hỏi tuần tự từ 1 đến 120, KHÔNG đảo
+            questions = [...originalQuestions];
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('total-q-num').innerText = questions.length;
+            
+            if (gameMode === 'single') {
+                document.getElementById('turn-label').innerText = 'Học sinh:';
+            } else {
+                document.getElementById('turn-label').innerText = 'Lượt của:';
+            }
+
+            currentIndex = 0;
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+
+        function updateScoreboardMini() {
+            const container = document.getElementById('scoreboard-mini');
+            container.innerHTML = '';
+            
+            if (gameMode === 'single') {
+                container.style.display = 'none';
+                document.getElementById('current-participant-badge').innerText = participants[0].name;
+            } else {
+                container.style.display = 'grid';
+                participants.forEach((p, idx) => {
+                    const isCurrent = idx === currentIndex;
+                    const div = document.createElement('div');
+                    div.className = `p-2 rounded-lg border ${isCurrent ? 'border-teal-400 bg-teal-950/40 pulse-glow' : 'border-slate-700 bg-slate-900/40'}`;
+                    div.innerHTML = `
+                        <div class="text-xs text-slate-300 truncate font-semibold">${p.name}</div>
+                        <div class="text-lg font-extrabold text-teal-300">${p.score} đ</div>
+                    `;
+                    container.appendChild(div);
+                });
+                document.getElementById('current-participant-badge').innerText = participants[currentIndex].name;
+            }
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('question-text').innerHTML = q.question;
+
+            // Hiển thị badge phân loại câu hỏi
+            const typeText = q.type === 'mcq' ? 'Trắc nghiệm 4 lựa chọn' : q.type === 'tf' ? 'Câu hỏi Đúng / Sai' : 'Câu hỏi Trả lời ngắn';
+            document.getElementById('question-badge').innerText = `${q.lesson} • Cấp độ: ${q.level} • ${typeText}`;
+
+            updateScoreboardMini();
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            if (q.type === 'mcq') {
+                // Trắc nghiệm 4 lựa chọn - Giữ nguyên thứ tự đáp án A, B, C, D (KHÔNG đảo)
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+
+                const letters = ['A', 'B', 'C', 'D'];
+
+                q.options.forEach((opt, idx) => {
+                    const cleanText = opt.text.replace(/^[A-D]\.\s*/, '');
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-slate-900/90 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 p-4 rounded-xl text-left transition flex items-start space-x-3 group shadow';
+                    
+                    btn.innerHTML = `
+                        <span class="bg-slate-800 text-teal-400 font-bold px-2.5 py-1 rounded-lg text-sm shrink-0">${letters[idx]}</span>
+                        <span class="text-slate-100 font-medium text-sm md:text-base my-auto">${cleanText}</span>
+                    `;
+
+                    btn.onclick = () => selectAnswer(opt.isCorrect, q.rationale);
+                    gridDiv.appendChild(btn);
+                });
+                optionsContainer.appendChild(gridDiv);
+            } else if (q.type === 'tf') {
+                // Câu hỏi Đúng / Sai
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto pt-2';
+
+                const btnTrue = document.createElement('button');
+                btnTrue.className = 'bg-emerald-900/80 hover:bg-emerald-700 border border-emerald-500 p-5 rounded-2xl text-center font-bold text-xl transition shadow-lg flex items-center justify-center space-x-3';
+                btnTrue.innerHTML = `<i class="fa-solid fa-check text-2xl text-emerald-400"></i> <span>ĐÚNG</span>`;
+                btnTrue.onclick = () => selectAnswer(q.correctBool === true, q.rationale);
+
+                const btnFalse = document.createElement('button');
+                btnFalse.className = 'bg-red-900/80 hover:bg-red-700 border border-red-500 p-5 rounded-2xl text-center font-bold text-xl transition shadow-lg flex items-center justify-center space-x-3';
+                btnFalse.innerHTML = `<i class="fa-solid fa-xmark text-2xl text-red-400"></i> <span>SAI</span>`;
+                btnFalse.onclick = () => selectAnswer(q.correctBool === false, q.rationale);
+
+                gridDiv.appendChild(btnTrue);
+                gridDiv.appendChild(btnFalse);
+                optionsContainer.appendChild(gridDiv);
+            } else if (q.type === 'sa') {
+                // Câu hỏi Trả lời ngắn
+                const boxDiv = document.createElement('div');
+                boxDiv.className = 'max-w-md mx-auto space-y-4 pt-2 text-center';
+                boxDiv.innerHTML = `
+                    <div class="text-xs text-slate-400">Nhập đáp án (chữ số, từ khóa hoặc số thập phân) rồi nhấn Xác nhận:</div>
+                    <div class="flex space-x-2">
+                        <input id="sa-input" type="text" class="w-full bg-slate-900 border border-teal-500 rounded-xl px-4 py-3 text-white text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-teal-400" placeholder="Nhập câu trả lời...">
+                        <button id="sa-submit-btn" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-6 py-3 rounded-xl shadow transition">Gửi</button>
+                    </div>
+                `;
+                optionsContainer.appendChild(boxDiv);
+
+                const inputEl = document.getElementById('sa-input');
+                const submitBtn = document.getElementById('sa-submit-btn');
+
+                const handleSaSubmit = () => {
+                    const userAns = inputEl.value.trim().toLowerCase().replace(/\\s+/g, '').replace(',', '.');
+                    const targetAns = q.correctAnswer.trim().toLowerCase().replace(/\\s+/g, '').replace(',', '.');
+                    const isCorrect = (userAns === targetAns);
+                    selectAnswer(isCorrect, `${q.rationale} (Đáp án chuẩn: <b>${q.correctAnswer}</b>)`);
+                };
+
+                submitBtn.onclick = handleSaSubmit;
+                inputEl.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') handleSaSubmit();
+                });
+                setTimeout(() => inputEl.focus(), 100);
+            }
+        }
+
+        function selectAnswer(isCorrect, rationaleText) {
+            document.getElementById('game-screen').classList.add('hidden');
+            const feedbackScreen = document.getElementById('feedback-screen');
+            feedbackScreen.classList.remove('hidden');
+
+            const title = document.getElementById('feedback-title');
+            const icon = document.getElementById('feedback-icon');
+            const rationale = document.getElementById('feedback-rationale');
+
+            if (isCorrect) {
+                playCorrectSound(); // Phát âm thanh đúng
+                participants[currentIndex].score += 10;
+                participants[currentIndex].correctCount++;
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                title.innerText = gameMode === 'single' ? "Chính Xác! (+10 điểm)" : `${participants[currentIndex].name} Trả Lời Chính Xác! (+10 điểm)`;
+                title.className = "text-2xl font-bold text-emerald-400";
+            } else {
+                playIncorrectSound(); // Phát âm thanh sai
+                if (gameMode === 'group') {
+                    participants[currentIndex].score = Math.max(0, participants[currentIndex].score - 5);
+                }
+                icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>';
+                title.innerText = gameMode === 'single' ? "Chưa Chính Xác!" : `${participants[currentIndex].name} Chưa Chính Xác! (-5 điểm)`;
+                title.className = "text-2xl font-bold text-red-400";
+            }
+
+            rationale.innerHTML = rationaleText;
+        }
+
+        function nextQuestion() {
+            if (gameMode === 'group') {
+                currentIndex = (currentIndex + 1) % participants.length;
+            }
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                document.getElementById('feedback-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                loadQuestion();
+            } else {
+                endGame(); // Nộp bài và hiển thị kết quả
+            }
+        }
+
+        function endGame() {
+            document.getElementById('feedback-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+
+            const container = document.getElementById('final-scoreboard');
+            container.innerHTML = '';
+
+            if (gameMode === 'single') {
+                const student = participants[0];
+                document.getElementById('end-subtitle').innerText = `Học sinh: ${student.name}`;
+                
+                // Quy đổi điểm sang hệ 10 trên tổng số 120 câu
+                const score10 = ((student.correctCount / questions.length) * 10).toFixed(1);
+
+                const div = document.createElement('div');
+                div.className = 'bg-slate-900 border border-teal-500 p-6 rounded-2xl space-y-3 text-center';
+                div.innerHTML = `
+                    <div class="text-slate-400 text-sm">Tổng số câu đúng: <b class="text-white">${student.correctCount} / ${questions.length}</b></div>
+                    <div class="text-4xl font-extrabold text-teal-300">${score10} <span class="text-xl font-bold text-slate-300">/ 10 Điểm</span></div>
+                    <div class="text-xs text-slate-400 pt-2">${Number(score10) >= 8 ? '🌟 Xuất sắc! Bạn nắm rất vững toàn diện kiến thức Chương 2 Carbohydrate.' : Number(score10) >= 5 ? '👍 Khá tốt! Hãy ôn luyện thêm các câu hỏi vận dụng chuyên sâu nhé.' : '📖 Cần cố gắng ôn lại lý thuyết các Bài 4 đến Bài 7 nhé!'}</div>
+                `;
+                container.appendChild(div);
+            } else {
+                document.getElementById('end-subtitle').innerText = "Trò chơi đã kết thúc! Tổng kết điểm số các đội chơi.";
+                const sortedList = [...participants].sort((a, b) => b.score - a.score);
+                sortedList.forEach((p, idx) => {
+                    const div = document.createElement('div');
+                    div.className = `flex justify-between items-center p-4 rounded-xl border ${idx === 0 ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold' : 'bg-slate-900 border-slate-700 text-white'}`;
+                    div.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold ${idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">${idx + 1}</span>
+                            <span>${p.name}</span>
+                        </div>
+                        <span class="text-xl font-extrabold">${p.score} điểm</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            confetti({
+                particleCount: 160,
+                spread: 85,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function restartGame() {
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>'''
+
+with open("Onchuong2_khong_gioi_han_thoi_gian_khong_dao.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Đã tạo file thành công!")
